@@ -32,3 +32,6 @@ dist-ssr
 .DS_Store
 
 /plans/**
+
+# Isolated worktrees used by coding agents
+.claude/worktrees
