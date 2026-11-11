@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "web", "runtimeExecutable": "pnpm", "runtimeArgs": ["dev"], "port": 5173 },
+    {
+      "name": "popup-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4173", "-d", ".output/chrome-mv3"],
+      "port": 4173
+    }
+  ]
+}
