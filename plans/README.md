@@ -10,17 +10,18 @@ checks compare against.
 
 ## Execution order & status
 
-| Plan                                           | Title                                                            | Priority | Effort | Depends on    | Status |
-| ---------------------------------------------- | ---------------------------------------------------------------- | -------- | ------ | ------------- | ------ |
-| [001](001-first-commit-and-ci.md)              | First commit and a CI workflow                                   | P1       | S      | —             | TODO   |
-| [002](002-relay-only-on-x.md)                  | Only X pages can ask the extension to judge posts                | P1       | S      | 001           | TODO   |
-| [003](003-rate-limit-judging.md)               | Rate-limit judging per user and per day                          | P1       | S–M    | 001           | TODO   |
-| [004](004-refresh-token-by-expiry.md)          | Refresh an expired sign-in up front, never retry a failed call   | P1       | S      | 001           | TODO   |
-| [005](005-show-backend-failures.md)            | Show backend failures in the popup                               | P2       | S      | 004           | TODO   |
-| [006](006-backend-tests.md)                    | Backend tests for sign-in checks and the count-once rule         | P2       | M      | 001           | TODO   |
-| [007](007-cache-verdicts.md)                   | Cache verdicts; one failed judgment no longer discards the batch | P2       | M      | 006, (003)    | TODO   |
-| [008](008-investigate-hide-rule-collateral.md) | Investigate whether hiding a post hides posts that quote it      | P3       | S      | 001           | TODO   |
-| [009](009-write-the-readme.md)                 | Rewrite the README for this project                              | P3       | S      | — (best last) | TODO   |
+| Plan                                           | Title                                                                  | Priority | Effort | Depends on    | Status                                                                                                                                                  |
+| ---------------------------------------------- | ---------------------------------------------------------------------- | -------- | ------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [001](001-first-commit-and-ci.md)              | First commit and a CI workflow                                         | P1       | S      | —             | DONE — reviewed and approved 2026-11-11; commits `72afa33` (baseline) and `b24960d` (CI, branch `advisor/001-ci`) await adoption from the isolated copy |
+| [002](002-relay-only-on-x.md)                  | Only X pages can ask the extension to judge posts                      | P1       | S      | 001           | TODO                                                                                                                                                    |
+| [003](003-rate-limit-judging.md)               | Rate-limit judging per user and per day                                | P1       | S–M    | 001           | TODO                                                                                                                                                    |
+| [004](004-refresh-token-by-expiry.md)          | Refresh an expired sign-in up front, never retry a failed call         | P1       | S      | 001           | TODO                                                                                                                                                    |
+| [005](005-show-backend-failures.md)            | Show backend failures in the popup                                     | P2       | S      | 004           | TODO                                                                                                                                                    |
+| [006](006-backend-tests.md)                    | Backend tests for sign-in checks and the count-once rule               | P2       | M      | 001           | TODO                                                                                                                                                    |
+| [007](007-cache-verdicts.md)                   | Cache verdicts; one failed judgment no longer discards the batch       | P2       | M      | 006, (003)    | TODO                                                                                                                                                    |
+| [008](008-investigate-hide-rule-collateral.md) | Investigate whether hiding a post hides posts that quote it            | P3       | S      | 001           | TODO                                                                                                                                                    |
+| [009](009-write-the-readme.md)                 | Rewrite the README for this project                                    | P3       | S      | — (best last) | TODO                                                                                                                                                    |
+| [010](010-hidden-posts-list-and-reload.md)     | Popup lists recently hidden posts, with Refresh and Reload tab buttons | P2       | S–M    | 001           | TODO                                                                                                                                                    |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
@@ -38,6 +39,8 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - 008 needs a browser signed in to X; an automated executor will hand its
   first step back to the operator.
 - 009 is best done last so the README describes the finished state.
+- 010 was requested by the owner after the audit. It is independent of
+  002–009, but if 006 has landed it adds two cases to that test file.
 
 ## Direction options (not planned)
 

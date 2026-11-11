@@ -6,8 +6,7 @@ export const MODEL = "typesafe/jev-1.14";
 export const QUESTIONS = {
   sells: {
     type: "noul",
-    instructions:
-      "Does `post` promote a product, service, or brand that the reader can buy?, or has the words 'advertisement' or 'ad' in the content",
+    instructions: "Does `post` promote a product, service, or brand that the reader can buy?, or has the words 'advertisement' or 'ad' in the content",
     criteria: {
       true: "The post presents something for sale or sign-up in a favourable light.",
       false: "The post is news, opinion, or personal talk, even if it names a company.",
