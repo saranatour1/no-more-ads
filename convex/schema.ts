@@ -7,7 +7,9 @@ export default defineSchema({
     userId: v.id("users"),
     url: v.string(),
     reason: v.union(v.literal("promoted"), v.literal("ad"), v.literal("slop")),
-  }).index("by_userId_and_url", ["userId", "url"]),
+  })
+    .index("by_userId_and_url", ["userId", "url"])
+    .index("by_userId", ["userId"]),
   users: defineTable({
     // Absent for guests.
     login: v.optional(v.string()),

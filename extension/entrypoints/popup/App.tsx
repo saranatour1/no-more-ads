@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { Add01Icon, Globe02Icon } from "@hugeicons/core-free-icons";
+import { Add01Icon, Globe02Icon, RefreshIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { Button } from "@@/components/ui/button";
 import { Input } from "@@/components/ui/input";
@@ -14,7 +14,9 @@ import {
 } from "@@/components/ui/item";
 import { Separator } from "@@/components/ui/separator";
 import { Switch } from "@@/components/ui/switch";
-import { useQuery } from "convex/react";
+import { useConvex, useConvexAuth, useQuery } from "convex/react";
+import { type FunctionReturnType } from "convex/server";
+import { browser } from "wxt/browser";
 import { api } from "../../../convex/_generated/api";
 import { parseHost } from "../../rules";
 import { DEFAULT_SITES, setSites, syncSites } from "../../sites";
@@ -24,6 +26,12 @@ const DEFAULT_HOSTS = DEFAULT_SITES.flatMap((site) => site.hosts);
 
 // shortcut: a flat guess at the time one ad costs a reader, measure it if the figure starts to matter.
 const SECONDS_PER_AD = 3;
+
+const REASONS = {
+  promoted: "Ad, marked by X",
+  ad: "Advert",
+  slop: "AI slop",
+};
 
 /** "45 sec" / "12 min" / "3 hr". */
 function timeSaved(ads: number): string {
@@ -70,9 +78,29 @@ export default function App() {
   // Null while loading or signed out: the total is kept per account.
   const dodged = useQuery(api.stats.myDodged) ?? null;
 
+  // One-shot query, not useQuery: a live subscription would make Refresh a no-op.
+  const convex = useConvex();
+  const { isAuthenticated } = useConvexAuth();
+  const [hidden, setHidden] = useState<FunctionReturnType<typeof api.stats.myHidden>>(null);
+  async function loadHidden() {
+    setHidden(await convex.query(api.stats.myHidden, {}));
+  }
+
   useEffect(() => {
     void syncSites().then(setEnabled);
   }, []);
+
+  // Auth is restored asynchronously, so load once the client is signed in.
+  useEffect(() => {
+    if (isAuthenticated) void convex.query(api.stats.myHidden, {}).then(setHidden);
+  }, [convex, isAuthenticated]);
+
+  async function reloadTab() {
+    // Re-register scripts first so the reloaded page gets the current ones.
+    await syncSites();
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id !== undefined) await browser.tabs.reload(tab.id);
+  }
 
   async function toggle(hosts: string[], on: boolean) {
     setEnabled(await setSites(hosts, on));
@@ -106,6 +134,36 @@ export default function App() {
             <ItemDescription>Ads and AI slop. Roughly {timeSaved(dodged)} saved.</ItemDescription>
           </ItemContent>
         </Item>
+      )}
+
+      {isAuthenticated && hidden !== null && (
+        <section className="mt-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-medium">Recently hidden</h2>
+            <Button variant="outline" size="sm" onClick={() => void loadHidden()}>
+              <HugeiconsIcon icon={RefreshIcon} aria-hidden />
+              Refresh
+            </Button>
+          </div>
+          {hidden.length === 0 ? (
+            <p className="mt-2 text-muted-foreground">Nothing hidden yet.</p>
+          ) : (
+            <ItemGroup className="mt-2 max-h-40 overflow-y-auto">
+              {hidden.map((post) => (
+                <Item key={post.url} size="xs">
+                  <ItemContent>
+                    <ItemTitle>{REASONS[post.reason]}</ItemTitle>
+                    <ItemDescription>
+                      <a href={post.url} target="_blank" rel="noreferrer">
+                        Open post
+                      </a>
+                    </ItemDescription>
+                  </ItemContent>
+                </Item>
+              ))}
+            </ItemGroup>
+          )}
+        </section>
       )}
 
       <ItemGroup className="mt-3 gap-2">
@@ -143,11 +201,16 @@ export default function App() {
           Add
         </Button>
       </form>
-      <p role="status" className="mt-2 min-h-4 text-xs text-muted-foreground">
-        {invalid
-          ? "That doesn't look like a website address."
-          : changed && "Reload open tabs to apply the change."}
-      </p>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <p role="status" className="min-h-4 text-xs text-muted-foreground">
+          {invalid
+            ? "That doesn't look like a website address."
+            : changed && "Reload open tabs to apply the change."}
+        </p>
+        <Button variant="outline" size="sm" onClick={() => void reloadTab()}>
+          Reload tab
+        </Button>
+      </div>
 
       <Separator className="mt-2" />
       <footer className="pt-2 text-xs text-muted-foreground">

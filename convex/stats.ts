@@ -51,3 +51,28 @@ export const myDodged = query({
     return userId === null ? null : await dodged.count(ctx, userId);
   },
 });
+
+/** The signed-in user's 20 most recently hidden posts, or null when signed out. */
+export const myHidden = query({
+  args: {},
+  returns: v.union(
+    v.null(),
+    v.array(
+      v.object({
+        url: v.string(),
+        reason: v.union(v.literal("promoted"), v.literal("ad"), v.literal("slop")),
+        hiddenAt: v.number(),
+      }),
+    ),
+  ),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return null;
+    const rows = await ctx.db
+      .query("hidden")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(20);
+    return rows.map((row) => ({ url: row.url, reason: row.reason, hiddenAt: row._creationTime }));
+  },
+});
