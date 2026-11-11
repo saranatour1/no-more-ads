@@ -39,6 +39,9 @@ async function asUser<T>(call: (convex: ConvexHttpClient) => Promise<T>, signedO
   return await attempt(false).catch(() => attempt(true));
 }
 
+// Set while the latest backend call failed; the popup reads it. Holds only a timestamp, never error text.
+const FAILURE_KEY = "backendFailure";
+
 type Message = { posts: Post[] } | { hidden: Hidden[] };
 
 export default defineBackground(() => {
@@ -52,10 +55,17 @@ export default defineBackground(() => {
             (convex) => convex.mutation(api.stats.recordHidden, { posts: message.hidden }),
             null,
           );
-    work.then(respond, (error) => {
-      console.error("[no-more-ads] backend call failed:", error);
-      respond("posts" in message ? [] : null);
-    });
+    work.then(
+      (answer) => {
+        void browser.storage.local.remove(FAILURE_KEY);
+        respond(answer);
+      },
+      (error) => {
+        console.error("[no-more-ads] backend call failed:", error);
+        void browser.storage.local.set({ [FAILURE_KEY]: Date.now() });
+        respond("posts" in message ? [] : null);
+      },
+    );
     return true; // The answer is sent asynchronously.
   });
 });

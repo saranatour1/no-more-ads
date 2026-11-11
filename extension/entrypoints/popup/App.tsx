@@ -74,6 +74,7 @@ export default function App() {
   const [changed, setChanged] = useState(false);
   const [draft, setDraft] = useState("");
   const [invalid, setInvalid] = useState(false);
+  const [failing, setFailing] = useState(false);
 
   // Null while loading or signed out: the total is kept per account.
   const dodged = useQuery(api.stats.myDodged) ?? null;
@@ -88,6 +89,9 @@ export default function App() {
 
   useEffect(() => {
     void syncSites().then(setEnabled);
+    void browser.storage.local
+      .get("backendFailure")
+      .then((items) => setFailing(items.backendFailure !== undefined));
   }, []);
 
   // Auth is restored asynchronously, so load once the client is signed in.
@@ -124,6 +128,13 @@ export default function App() {
         <h1 className="font-heading text-base font-semibold">No More Ads</h1>
         <p className="text-muted-foreground">Choose where ads disappear.</p>
       </header>
+
+      {failing && (
+        <p role="alert" className="mt-3 text-xs text-destructive">
+          The extension couldn't reach its backend, so posts aren't being judged or counted. Reload
+          the extension from your browser's extensions page, then refresh the tab.
+        </p>
+      )}
 
       {dodged !== null && (
         <Item variant="muted" size="sm" className="mt-3">
