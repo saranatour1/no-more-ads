@@ -13,12 +13,8 @@ function SignedOut() {
   const [error, setError] = useState<string | null>(null);
 
   async function signIn() {
-    // The popup closes as soon as the GitHub window takes focus, which would
-    // kill the flow, so sign-in runs from this same page opened in a tab.
-    if (!location.search) {
-      await browser.tabs.create({ url: `${location.href}?tab` });
-      return window.close();
-    }
+    // This runs in the settings tab, which stays open while the GitHub
+    // window has focus (a popup would close and kill the flow).
     // Must be listed in AUTH_EXTENSION_ORIGINS on the Convex deployment.
     const redirectTo = browser.identity.getRedirectURL();
     try {

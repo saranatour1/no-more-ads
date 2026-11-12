@@ -1,6 +1,6 @@
 import { browser } from "wxt/browser";
 import { defineContentScript } from "wxt/utils/define-content-script";
-import { rulesFor } from "../rules";
+import { AD_LABELS, rulesFor } from "../rules";
 
 export default defineContentScript({
   // Registered from the popup, only for sites the user turned on.
@@ -15,30 +15,58 @@ export default defineContentScript({
     // Relay between the page-world script (x-network), which sees X's posts,
     // and the background, which asks the backend which of them to hide.
     document.addEventListener("nma-posts", (event) => {
-      const posts = JSON.parse((event as CustomEvent<string>).detail);
-      void browser.runtime.sendMessage({ posts }).then((verdicts: unknown[]) => {
+      const { batch, posts } = JSON.parse((event as CustomEvent<string>).detail);
+      const answer = (verdicts: unknown) =>
         document.dispatchEvent(
-          new CustomEvent("nma-verdicts", { detail: JSON.stringify(verdicts) }),
+          new CustomEvent("nma-verdicts", { detail: JSON.stringify({ batch, verdicts }) }),
         );
-      });
+      // The posts are held invisible until answered, so a background that is
+      // asleep or was reloaded must still get an (empty) answer.
+      Promise.resolve()
+        .then(() => browser.runtime.sendMessage({ posts }))
+        .then(answer, () => answer([]));
     });
     // Hidden posts are recorded against the user's account on the backend.
     document.addEventListener("nma-hidden", (event) => {
       const hidden = JSON.parse((event as CustomEvent<string>).detail);
-      void browser.runtime.sendMessage({ hidden });
+      Promise.resolve()
+        .then(() => browser.runtime.sendMessage({ hidden }))
+        .catch(() => {});
     });
 
-    if (labelled === undefined) return;
+    // The user's blocked words and sites are mirrored into extension storage
+    // by the popup; pass them to the page-world script, now and on change.
+    const sendBlocked = () =>
+      void browser.storage.local.get("blockedTerms").then(({ blockedTerms }) => {
+        document.dispatchEvent(
+          new CustomEvent("nma-blocked", { detail: JSON.stringify(blockedTerms ?? []) }),
+        );
+      });
+    sendBlocked();
+    document.addEventListener("nma-ready", sendBlocked);
+    browser.storage.onChanged.addListener((changes) => {
+      if ("blockedTerms" in changes) sendBlocked();
+    });
 
-    const { item, container, ignore, labels } = labelled;
+    // Anything whose visible label is exactly "Ad", "Sponsored", ... is
+    // hidden here in the page, on every enabled site, with no backend call.
+    const { container, ignore } = labelled;
+    const labels = `//text()[${AD_LABELS.map((label) => `normalize-space()="${label}"`).join(" or ")}]`;
     let queued = false;
     const sweep = () => {
       queued = false;
-      for (const el of document.querySelectorAll<HTMLElement>(item)) {
-        const isAd = [...el.querySelectorAll("span")].some(
-          (span) => labels.includes(span.textContent ?? "") && span.closest(ignore) === null,
-        );
-        if (isAd) (el.closest<HTMLElement>(container) ?? el).style.display = "none";
+      const found = document.evaluate(
+        labels,
+        document,
+        null,
+        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+        null,
+      );
+      for (let i = 0; i < found.snapshotLength; i++) {
+        const label = found.snapshotItem(i)?.parentElement;
+        if (label == null || (ignore !== undefined && label.closest(ignore) !== null)) continue;
+        const box = label.closest<HTMLElement>(container);
+        if (box !== null) box.style.display = "none";
       }
     };
     new MutationObserver(() => {

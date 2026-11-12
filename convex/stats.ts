@@ -3,6 +3,7 @@ import { ShardedCounter } from "@convex-dev/sharded-counter";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
+import { reason } from "./schema";
 
 // One counter per user: how many posts the extension has hidden for them.
 const dodged = new ShardedCounter(components.shardedCounter);
@@ -13,7 +14,7 @@ export const recordHidden = mutation({
     posts: v.array(
       v.object({
         id: v.string(),
-        reason: v.union(v.literal("promoted"), v.literal("ad"), v.literal("slop")),
+        reason: reason,
       }),
     ),
   },
@@ -60,7 +61,7 @@ export const myHidden = query({
     v.array(
       v.object({
         url: v.string(),
-        reason: v.union(v.literal("promoted"), v.literal("ad"), v.literal("slop")),
+        reason: reason,
         hiddenAt: v.number(),
       }),
     ),

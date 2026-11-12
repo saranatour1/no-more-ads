@@ -16,6 +16,9 @@ test("isAd needs a disclosure, or both selling and a push to act", () => {
   // Praising a product without pushing it, and unsettled answers, are not ads.
   expect(isAd(answers({ sells: 0.9, call_to_action: 0.2 }))).toBe(false);
   expect(isAd(answers({ sells: 0.6, call_to_action: 0.6, paid_partnership: 0.6 }))).toBe(false);
+  // A selling post with a video is a promotional video; a plain video is not.
+  expect(isAd(answers({ sells: 0.9 }), true)).toBe(true);
+  expect(isAd(answers({ sells: 0.2 }), true)).toBe(false);
 });
 
 test("isSlop needs both a stock hook and generic content", () => {

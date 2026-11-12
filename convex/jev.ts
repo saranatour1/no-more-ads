@@ -4,16 +4,23 @@ import { v } from "convex/values";
 import { action, internalAction } from "./_generated/server";
 import { type Answers, isAd, isSlop, MODEL, QUESTIONS } from "./adRules";
 
-const args = { text: v.string() };
+// `video` is optional so older copies of the extension keep working.
+const args = { text: v.string(), video: v.optional(v.boolean()) };
 
-async function judge(text: string) {
+async function judge(text: string, video = false) {
   const response = await fetch("https://ai-gateway.convex.dev/alpha/decisions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${await getServiceToken("ai-gateway")}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ model: MODEL, state: { post: text }, questions: QUESTIONS }),
+    body: JSON.stringify({
+      model: MODEL,
+      state: { post: text },
+      questions: QUESTIONS,
+      // Only endpoints that keep no copy of the post; the call fails if none is available.
+      provider: { zdr: true },
+    }),
   });
   // A failed call is an error, never a "not an ad".
   if (!response.ok) throw new Error(`Jev request failed: ${response.status}`);
@@ -26,7 +33,7 @@ async function judge(text: string) {
     if (typeof noul !== "number") throw new Error(`Jev gave no answer for ${name}`);
     nouls[name] = noul;
   }
-  return { ad: isAd(nouls), slop: isSlop(nouls), answers: nouls };
+  return { ad: isAd(nouls, video), slop: isSlop(nouls), answers: nouls };
 }
 
 /**
@@ -34,7 +41,7 @@ async function judge(text: string) {
  * since every post judged costs money.
  */
 export const judgePosts = action({
-  args: { posts: v.array(v.object({ id: v.string(), text: v.string() })) },
+  args: { posts: v.array(v.object({ id: v.string(), ...args })) },
   returns: v.array(
     v.object({ id: v.string(), reason: v.union(v.literal("ad"), v.literal("slop")) }),
   ),
@@ -42,7 +49,9 @@ export const judgePosts = action({
     if ((await getAuthUserId(ctx)) === null) throw new Error("Not signed in");
     // Bounds on what one call can spend.
     if (posts.length > 200) throw new Error("Too many posts");
-    const verdicts = await Promise.all(posts.map(({ text }) => judge(text.slice(0, 4000))));
+    const verdicts = await Promise.all(
+      posts.map(({ text, video }) => judge(text.slice(0, 4000), video)),
+    );
     return posts.flatMap(({ id }, i) => {
       const { ad, slop } = verdicts[i];
       return ad || slop ? [{ id, reason: ad ? ("ad" as const) : ("slop" as const) }] : [];
@@ -51,4 +60,7 @@ export const judgePosts = action({
 });
 
 // For trying questions from the CLI: `convex run jev:probe '{"text":"..."}'`.
-export const probe = internalAction({ args, handler: (_ctx, { text }) => judge(text) });
+export const probe = internalAction({
+  args,
+  handler: (_ctx, { text, video }) => judge(text, video),
+});
