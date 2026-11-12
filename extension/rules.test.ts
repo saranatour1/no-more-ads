@@ -2,12 +2,13 @@ import { expect, test } from "vite-plus/test";
 import { parseHost, rulesFor } from "./rules";
 
 test("rulesFor picks site rules by hostname", () => {
-  expect(rulesFor("x.com").labelled?.labels).toContain("Ad");
-  expect(rulesFor("mobile.twitter.com").labelled).toBeDefined();
+  expect(rulesFor("x.com").labelled.container).toContain("cellInnerDiv");
+  expect(rulesFor("mobile.twitter.com").labelled.ignore).toContain("tweetText");
   expect(rulesFor("www.google.co.uk").hide).toContain("#tads");
   expect(rulesFor("www.facebook.com").hide.some((s) => s.includes("Sponsored"))).toBe(true);
   // Lookalike hosts and unknown sites only get the generic rules.
-  expect(rulesFor("notx.com").labelled).toBeUndefined();
+  expect(rulesFor("notx.com").labelled.container).toContain("article");
+  expect(rulesFor("notx.com").labelled.ignore).toBeUndefined();
   expect(rulesFor("example.com").hide).toEqual(rulesFor("notgoogle.dev").hide);
 });
 

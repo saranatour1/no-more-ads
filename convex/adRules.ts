@@ -53,9 +53,13 @@ export type Answers = Record<keyof typeof QUESTIONS, number>;
 // Starting threshold from TypeSafe's guidance; anything lower counts as "not settled".
 const YES = 0.7;
 
-/** A disclosed sponsorship is an ad; otherwise it must both sell and push the reader. */
-export function isAd({ sells, call_to_action, paid_partnership }: Answers): boolean {
-  return paid_partnership > YES || (sells > YES && call_to_action > YES);
+/**
+ * A disclosed sponsorship is an ad. Otherwise the post must sell something
+ * and either push the reader to act or carry a video: a promotional video
+ * makes its pitch on screen, where the model cannot see it.
+ */
+export function isAd({ sells, call_to_action, paid_partnership }: Answers, video = false): boolean {
+  return paid_partnership > YES || (sells > YES && (call_to_action > YES || video));
 }
 
 /** Slop needs both signs: a formula opening alone, or a general post alone, is ordinary. */

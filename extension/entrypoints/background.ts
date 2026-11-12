@@ -42,9 +42,18 @@ async function asUser<T>(call: (convex: ConvexHttpClient) => Promise<T>, signedO
 // Set while the latest backend call failed; the popup reads it. Holds only a timestamp, never error text.
 const FAILURE_KEY = "backendFailure";
 
-type Message = { posts: Post[] } | { hidden: Hidden[] };
+type Message = { posts: Pick<Post, "id" | "text" | "video">[] } | { hidden: Hidden[] };
 
 export default defineBackground(() => {
+  // After the extension restarts (the popup's Reload button, or an update),
+  // refresh the tab in front so its page gets the current scripts. `url` is
+  // only visible for sites the user switched on, so other tabs are left alone.
+  browser.runtime.onInstalled.addListener(() => {
+    void browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+      if (tab?.id !== undefined && tab.url !== undefined) void browser.tabs.reload(tab.id);
+    });
+  });
+
   browser.runtime.onMessage.addListener((message: Message, _sender, respond) => {
     const work =
       "posts" in message

@@ -10,6 +10,7 @@
 
 import type * as adRules from "../adRules.js";
 import type * as auth from "../auth.js";
+import type * as blocked from "../blocked.js";
 import type * as jev from "../jev.js";
 import type * as stats from "../stats.js";
 import type * as users from "../users.js";
@@ -23,6 +24,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   adRules: typeof adRules;
   auth: typeof auth;
+  blocked: typeof blocked;
   jev: typeof jev;
   stats: typeof stats;
   users: typeof users;
