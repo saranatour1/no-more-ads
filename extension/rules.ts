@@ -67,14 +67,20 @@ const SITES: [RegExp, Partial<Rules>][] = [
   [
     /(^|\.)linkedin\.com$/,
     {
-      // shortcut: unverified against a signed-in feed, LinkedIn renames its classes often.
-      hide: [".ad-banner-container", "[data-ad-banner]"],
+      // Checked against the feed's markup in Nov 2026. Its class names are
+      // generated, so only roles, test ids and titles are used.
+      hide: [
+        // The side-column ad and the box drawn around it.
+        'div:has(> iframe[title="advertisement"])',
+        ".ad-banner-container",
+        "[data-ad-banner]",
+      ],
       labelled: {
-        container:
-          '[data-view-name="feed-full-update"], .feed-shared-update-v2, .occludable-update, li',
+        // A feed post is a list item; the class names are for the older site.
+        container: '[role="listitem"], .feed-shared-update-v2, .occludable-update',
         // The post's own words and its comments don't count, only LinkedIn's label.
         ignore:
-          '[data-view-name="feed-commentary"], .update-components-text, .comments-comments-list',
+          '[data-testid="expandable-text-box"], .update-components-text, .comments-comments-list',
       },
     },
   ],

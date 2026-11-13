@@ -55,7 +55,11 @@ export default defineContentScript({
     const counts = !/(^|\.)(x|twitter)\.com$/.test(location.hostname);
     const counted = new WeakSet<Element>();
     const selectors = hide.join(",");
-    const labels = `//text()[${AD_LABELS.map((label) => `normalize-space()="${label}"`).join(" or ")}]`;
+    // Sites pad labels with non-breaking and zero-width characters, which
+    // normalize-space() alone leaves in place.
+    const text =
+      'normalize-space(translate(., "\u00a0\u200b\u200c\u200d\u200e\u200f\u2060\ufeff", "        "))';
+    const labels = `//text()[${AD_LABELS.map((label) => `${text}="${label}"`).join(" or ")}]`;
     let queued = false;
     const sweep = () => {
       queued = false;

@@ -7,7 +7,7 @@ test("rulesFor picks site rules by hostname", () => {
   expect(rulesFor("www.google.co.uk").hide).toContain("#tads");
   expect(rulesFor("www.facebook.com").hide.some((s) => s.includes("Sponsored"))).toBe(true);
   expect(rulesFor("old.reddit.com").hide).toContain("shreddit-ad-post");
-  expect(rulesFor("www.linkedin.com").labelled.container).toContain("feed-full-update");
+  expect(rulesFor("www.linkedin.com").labelled.container).toContain('[role="listitem"]');
   // Lookalike hosts and unknown sites only get the generic rules.
   expect(rulesFor("notx.com").labelled.container).toContain("article");
   expect(rulesFor("notx.com").labelled.ignore).toBeUndefined();
