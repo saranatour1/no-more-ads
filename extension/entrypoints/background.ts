@@ -5,6 +5,7 @@ import { defineBackground } from "wxt/utils/define-background";
 import { api } from "../../convex/_generated/api";
 import { authStorage } from "../authStorage";
 import type { Post, Recorded } from "../promoted";
+import { syncSites } from "../sites";
 
 const url = import.meta.env.VITE_CONVEX_URL as string;
 
@@ -45,6 +46,13 @@ const FAILURE_KEY = "backendFailure";
 type Message = { posts: Pick<Post, "id" | "text" | "video">[] } | { hidden: Recorded[] };
 
 export default defineBackground(() => {
+  // Register the page scripts whenever the extension starts or a site is
+  // switched on or off, so hiding never depends on the popup having been opened.
+  const sync = () => void syncSites().catch((error) => console.error("[no-more-ads]", error));
+  sync();
+  browser.permissions.onAdded.addListener(sync);
+  browser.permissions.onRemoved.addListener(sync);
+
   // After the extension restarts (the popup's Reload button, or an update),
   // refresh the tab in front so its page gets the current scripts. `url` is
   // only visible for sites the user switched on, so other tabs are left alone.

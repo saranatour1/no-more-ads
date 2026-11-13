@@ -62,9 +62,12 @@ export async function syncSites(): Promise<string[]> {
   ] as const;
   for (const script of scripts) {
     if (script.matches.length === 0) continue;
-    await browser.scripting.registerContentScripts([
-      { ...script, js: [...script.js], runAt: "document_start" },
-    ]);
+    const registration = [{ ...script, js: [...script.js], runAt: "document_start" as const }];
+    // The popup, this page and the background can sync at the same moment; if
+    // another one registered the script first ("Duplicate script ID"), update it.
+    await browser.scripting
+      .registerContentScripts(registration)
+      .catch(() => browser.scripting.updateContentScripts(registration));
   }
   return matches.map((m) => m.slice(PREFIX.length, -SUFFIX.length));
 }
