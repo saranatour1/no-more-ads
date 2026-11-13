@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import auth from "@convex-dev/auth/convex.config.js";
 import authAnonymous from "@convex-dev/auth/components/anonymous/convex.config.js";
 import shardedCounter from "@convex-dev/sharded-counter/convex.config.js";
+import rateLimiter from "@convex-dev/rate-limiter/convex.config.js";
 import authGithub from "@convex-dev/auth/components/github/convex.config.js";
 
 const app = defineApp({
@@ -33,5 +34,6 @@ app.use(authGithub, {
 
 app.use(authAnonymous);
 app.use(shardedCounter);
+app.use(rateLimiter);
 
 export default app;

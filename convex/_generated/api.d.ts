@@ -61,4 +61,5 @@ export declare const components: {
   authGithub: import("@convex-dev/auth/components/github/_generated/component.js").ComponentApi<"authGithub">;
   authAnonymous: import("@convex-dev/auth/components/anonymous/_generated/component.js").ComponentApi<"authAnonymous">;
   shardedCounter: import("@convex-dev/sharded-counter/_generated/component.js").ComponentApi<"shardedCounter">;
+  rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
 };

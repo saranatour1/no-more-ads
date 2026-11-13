@@ -1,6 +1,8 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { DAY, MINUTE, RateLimiter } from "@convex-dev/rate-limiter";
 import { getServiceToken } from "convex/server";
 import { v } from "convex/values";
+import { components } from "./_generated/api";
 import { action, internalAction } from "./_generated/server";
 import { type Answers, isAd, isSlop, MODEL, QUESTIONS } from "./adRules";
 
@@ -36,6 +38,12 @@ async function judge(text: string, video = false) {
   return { ad: isAd(nouls, video), slop: isSlop(nouls), answers: nouls };
 }
 
+// Every judged post is billed, so cap what one user and the whole deployment can spend.
+const rateLimiter = new RateLimiter(components.rateLimiter, {
+  judgePerUser: { kind: "token bucket", rate: 300, period: MINUTE, capacity: 600 },
+  judgeDaily: { kind: "fixed window", rate: 50_000, period: DAY },
+});
+
 /**
  * Which of these posts are adverts or AI slop? Returns each with the reason. Signed-in users only,
  * since every post judged costs money.
@@ -46,9 +54,15 @@ export const judgePosts = action({
     v.object({ id: v.string(), reason: v.union(v.literal("ad"), v.literal("slop")) }),
   ),
   handler: async (ctx, { posts }) => {
-    if ((await getAuthUserId(ctx)) === null) throw new Error("Not signed in");
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Not signed in");
     // Bounds on what one call can spend.
     if (posts.length > 200) throw new Error("Too many posts");
+    if (posts.length > 0) {
+      const count = posts.length;
+      await rateLimiter.limit(ctx, "judgePerUser", { key: userId, count, throws: true });
+      await rateLimiter.limit(ctx, "judgeDaily", { count, throws: true });
+    }
     const verdicts = await Promise.all(
       posts.map(({ text, video }) => judge(text.slice(0, 4000), video)),
     );
