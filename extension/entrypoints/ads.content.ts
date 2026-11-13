@@ -51,10 +51,15 @@ export default defineContentScript({
     // Anything whose visible label is exactly "Ad", "Sponsored", ... is
     // hidden here in the page, on every enabled site, with no backend call.
     const { container, ignore } = labelled;
+    // X's posts are counted by x-network, from the network responses.
+    const counts = !/(^|\.)(x|twitter)\.com$/.test(location.hostname);
+    const counted = new WeakSet<Element>();
+    const selectors = hide.join(",");
     const labels = `//text()[${AD_LABELS.map((label) => `normalize-space()="${label}"`).join(" or ")}]`;
     let queued = false;
     const sweep = () => {
       queued = false;
+      const boxes: Element[] = [];
       const found = document.evaluate(
         labels,
         document,
@@ -67,6 +72,34 @@ export default defineContentScript({
         if (label == null || (ignore !== undefined && label.closest(ignore) !== null)) continue;
         const box = label.closest<HTMLElement>(container);
         if (box !== null) box.style.display = "none";
+        if (box !== null) boxes.push(box);
+      }
+      if (!counts) return;
+      // Everything the stylesheet above hides counts too, outermost box only.
+      for (const box of document.querySelectorAll(selectors)) {
+        if (box.parentElement?.closest(selectors) == null) boxes.push(box);
+      }
+      const hidden = boxes.flatMap((box) => {
+        if (counted.has(box)) return [];
+        // The ad's link is what identifies it; an empty ad slot has none and is not an ad.
+        const link =
+          box.querySelector<HTMLAnchorElement>("a[href]")?.href ??
+          box.querySelector("iframe")?.src ??
+          (box as HTMLIFrameElement).src ??
+          // Reddit keeps a post's link in an attribute; its real links sit in shadow DOM.
+          new URL(
+            box.getAttribute("permalink") ?? (box.id === "" ? "about:blank" : `#${box.id}`),
+            location.href,
+          ).href;
+        // Not marked until it has a link: ads often fill in after they appear.
+        if (!/^https?:/.test(link)) return [];
+        counted.add(box);
+        return [{ url: link.slice(0, 500), reason: "promoted" as const }];
+      });
+      if (hidden.length > 0) {
+        Promise.resolve()
+          .then(() => browser.runtime.sendMessage({ hidden: hidden.slice(0, 200) }))
+          .catch(() => {});
       }
     };
     new MutationObserver(() => {

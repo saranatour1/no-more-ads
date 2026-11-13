@@ -1,4 +1,10 @@
-import { Facebook01Icon, GoogleIcon, NewTwitterIcon } from "@hugeicons/core-free-icons";
+import {
+  Facebook01Icon,
+  GoogleIcon,
+  Linkedin01Icon,
+  NewTwitterIcon,
+  RedditIcon,
+} from "@hugeicons/core-free-icons";
 import { browser } from "wxt/browser";
 
 export const DEFAULT_SITES = [
@@ -11,6 +17,16 @@ export const DEFAULT_SITES = [
     name: "Facebook",
     hosts: ["facebook.com"],
     icon: Facebook01Icon,
+  },
+  {
+    name: "Reddit",
+    hosts: ["reddit.com"],
+    icon: RedditIcon,
+  },
+  {
+    name: "LinkedIn",
+    hosts: ["linkedin.com"],
+    icon: Linkedin01Icon,
   },
   {
     name: "Google",

@@ -47,6 +47,38 @@ const SITES: [RegExp, Partial<Rules>][] = [
     },
   ],
   [
+    /(^|\.)reddit\.com$/,
+    {
+      // Reddit's own elements for promoted posts, on the new and the old site.
+      hide: [
+        "shreddit-ad-post",
+        "shreddit-comments-page-ad",
+        "shreddit-comment-tree-ad",
+        "shreddit-sidebar-ad",
+        ".promotedlink",
+      ],
+      labelled: {
+        container: "shreddit-post, article, .thing",
+        // A post title or body that just says "Ad" is not an ad.
+        ignore: '[slot="title"], [slot="text-body"], .title, .usertext-body',
+      },
+    },
+  ],
+  [
+    /(^|\.)linkedin\.com$/,
+    {
+      // shortcut: unverified against a signed-in feed, LinkedIn renames its classes often.
+      hide: [".ad-banner-container", "[data-ad-banner]"],
+      labelled: {
+        container:
+          '[data-view-name="feed-full-update"], .feed-shared-update-v2, .occludable-update, li',
+        // The post's own words and its comments don't count, only LinkedIn's label.
+        ignore:
+          '[data-view-name="feed-commentary"], .update-components-text, .comments-comments-list',
+      },
+    },
+  ],
+  [
     /(^|\.)google\.[a-z.]+$/,
     {
       hide: [

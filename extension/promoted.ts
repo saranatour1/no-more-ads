@@ -1,6 +1,8 @@
 export type Post = { id: string; text: string; video: boolean; links: string[] };
 /** A post to hide, and why. */
 export type Hidden = { id: string; reason: "promoted" | "ad" | "slop" | "blocked" };
+/** What the backend records: a post on X by id, or an ad anywhere else by its link. */
+export type Recorded = Hidden | { url: string; reason: Hidden["reason"] };
 
 /**
  * What a timeline API response from X holds: the posts X itself marks as ads
