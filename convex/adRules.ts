@@ -1,6 +1,9 @@
 // Everything Jev is asked about a post, and how the answers become a verdict.
 // Jev only judges; the decision is the truth table in `isAd` below.
 
+// Bump when QUESTIONS or the rules change, so stored verdicts stop matching.
+export const RULES_VERSION = 1;
+
 export const MODEL = "typesafe/jev-1.14";
 
 export const QUESTIONS = {

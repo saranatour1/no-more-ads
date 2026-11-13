@@ -2,9 +2,12 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { DAY, MINUTE, RateLimiter } from "@convex-dev/rate-limiter";
 import { getServiceToken } from "convex/server";
 import { v } from "convex/values";
-import { components } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import { action, internalAction } from "./_generated/server";
 import { type Answers, isAd, isSlop, MODEL, QUESTIONS } from "./adRules";
+import { verdictKey } from "./verdicts";
+
+type Reason = "ad" | "slop" | "none";
 
 // `video` is optional so older copies of the extension keep working.
 const args = { text: v.string(), video: v.optional(v.boolean()) };
@@ -58,17 +61,46 @@ export const judgePosts = action({
     if (userId === null) throw new Error("Not signed in");
     // Bounds on what one call can spend.
     if (posts.length > 200) throw new Error("Too many posts");
-    if (posts.length > 0) {
-      const count = posts.length;
+    const items = [];
+    for (const { id, text, video } of posts) {
+      const clipped = text.slice(0, 4000);
+      const isVideo = video ?? false;
+      items.push({ id, text: clipped, video: isVideo, key: await verdictKey(clipped, isVideo) });
+    }
+    const cached: { key: string; reason: Reason }[] =
+      items.length > 0
+        ? await ctx.runQuery(internal.verdicts.lookup, {
+            keys: [...new Set(items.map((i) => i.key))],
+          })
+        : [];
+    const reasons = new Map<string, Reason>(cached.map(({ key, reason }) => [key, reason]));
+    // Identical content is judged once.
+    const misses = [
+      ...new Map(items.filter((i) => !reasons.has(i.key)).map((i) => [i.key, i])).values(),
+    ];
+    if (misses.length > 0) {
+      const count = misses.length;
       await rateLimiter.limit(ctx, "judgePerUser", { key: userId, count, throws: true });
       await rateLimiter.limit(ctx, "judgeDaily", { count, throws: true });
     }
-    const verdicts = await Promise.all(
-      posts.map(({ text, video }) => judge(text.slice(0, 4000), video)),
-    );
-    return posts.flatMap(({ id }, i) => {
-      const { ad, slop } = verdicts[i];
-      return ad || slop ? [{ id, reason: ad ? ("ad" as const) : ("slop" as const) }] : [];
+    const results = await Promise.allSettled(misses.map((m) => judge(m.text, m.video)));
+    const fresh: { key: string; reason: Reason }[] = [];
+    results.forEach((result, i) => {
+      // A failed judgment is retried on a later visit, because nothing was stored for it.
+      if (result.status === "rejected") {
+        console.error(`judgment failed for ${misses[i].key}`);
+        return;
+      }
+      const { ad, slop } = result.value;
+      fresh.push({ key: misses[i].key, reason: ad ? "ad" : slop ? "slop" : "none" });
+    });
+    if (fresh.length > 0) {
+      await ctx.runMutation(internal.verdicts.save, { verdicts: fresh });
+      for (const { key, reason } of fresh) reasons.set(key, reason);
+    }
+    return items.flatMap(({ id, key }) => {
+      const reason = reasons.get(key);
+      return reason === "ad" || reason === "slop" ? [{ id, reason }] : [];
     });
   },
 });

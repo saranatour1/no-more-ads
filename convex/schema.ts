@@ -23,6 +23,12 @@ export default defineSchema({
   })
     .index("by_userId_and_url", ["userId", "url"])
     .index("by_userId", ["userId"]),
+  // One model verdict per distinct post content, shared by all users, so the
+  // same post is judged once. `key` is a hash; see verdictKey.
+  verdicts: defineTable({
+    key: v.string(),
+    reason: v.union(v.literal("ad"), v.literal("slop"), v.literal("none")),
+  }).index("by_key", ["key"]),
   users: defineTable({
     // Absent for guests.
     login: v.optional(v.string()),

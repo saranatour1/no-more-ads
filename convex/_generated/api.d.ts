@@ -14,6 +14,7 @@ import type * as blocked from "../blocked.js";
 import type * as jev from "../jev.js";
 import type * as stats from "../stats.js";
 import type * as users from "../users.js";
+import type * as verdicts from "../verdicts.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   jev: typeof jev;
   stats: typeof stats;
   users: typeof users;
+  verdicts: typeof verdicts;
 }>;
 
 /**
