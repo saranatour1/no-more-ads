@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp dev",
+    "dev": "pnpm run \"/^dev:/\"",
+    "dev:web": "vp dev",
     "dev:convex": "convex dev",
     "dev:ext": "wxt",
     "build:ext": "wxt build && wxt build -b firefox",
@@ -21,7 +22,7 @@
     "@hugeicons/react": "^1.1.10",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
-    "convex": "^1.49.0",
+    "convex": "^1.50.0",
     "radix-ui": "^1.8.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

@@ -10,3 +10,5 @@ peerDependencyRules:
     vite: "*"
 allowBuilds:
   esbuild: true
+minimumReleaseAgeExclude:
+  - convex@1.50.0
