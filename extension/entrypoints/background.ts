@@ -4,7 +4,7 @@ import { browser } from "wxt/browser";
 import { defineBackground } from "wxt/utils/define-background";
 import { api } from "../../convex/_generated/api";
 import { authStorage } from "../authStorage";
-import type { Hidden, Post } from "../promoted";
+import type { Post, Recorded } from "../promoted";
 
 const url = import.meta.env.VITE_CONVEX_URL as string;
 
@@ -42,7 +42,7 @@ async function asUser<T>(call: (convex: ConvexHttpClient) => Promise<T>, signedO
 // Set while the latest backend call failed; the popup reads it. Holds only a timestamp, never error text.
 const FAILURE_KEY = "backendFailure";
 
-type Message = { posts: Pick<Post, "id" | "text" | "video">[] } | { hidden: Hidden[] };
+type Message = { posts: Pick<Post, "id" | "text" | "video">[] } | { hidden: Recorded[] };
 
 export default defineBackground(() => {
   // After the extension restarts (the popup's Reload button, or an update),

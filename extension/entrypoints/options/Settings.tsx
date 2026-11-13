@@ -16,6 +16,7 @@ import { useConvex, useConvexAuth, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
 import { browser } from "wxt/browser";
 import { api } from "../../../convex/_generated/api";
+import { lastDays } from "../../breakdown";
 import { parseHost } from "../../rules";
 import SiteRow from "../../SiteRow.tsx";
 import { DEFAULT_SITES, setSites, syncSites } from "../../sites";
@@ -24,7 +25,7 @@ import Account from "./Account.tsx";
 const DEFAULT_HOSTS = DEFAULT_SITES.flatMap((site) => site.hosts);
 
 const REASONS = {
-  promoted: "Ad, marked by X",
+  promoted: "Ad, marked by the site",
   ad: "Advert",
   slop: "AI slop",
   blocked: "Blocked word or site",
@@ -41,8 +42,11 @@ export default function Settings() {
   const convex = useConvex();
   const { isAuthenticated } = useConvexAuth();
   const [hidden, setHidden] = useState<FunctionReturnType<typeof api.stats.myHidden>>(null);
+  const [numbers, setNumbers] = useState<FunctionReturnType<typeof api.stats.myBreakdown>>(null);
+  const [days] = useState(lastDays);
   async function loadHidden() {
     setHidden(await convex.query(api.stats.myHidden, {}));
+    setNumbers(await convex.query(api.stats.myBreakdown, { days: days.starts }));
   }
 
   useEffect(() => {
@@ -51,7 +55,8 @@ export default function Settings() {
 
   // Auth is restored asynchronously, so load once the client is signed in.
   useEffect(() => {
-    if (isAuthenticated) void convex.query(api.stats.myHidden, {}).then(setHidden);
+    if (isAuthenticated) void loadHidden();
+    // oxlint-disable-next-line react/exhaustive-deps -- loadHidden only uses stable values
   }, [convex, isAuthenticated]);
 
   async function reload() {
@@ -191,6 +196,41 @@ export default function Settings() {
         </section>
       )}
 
+      {isAuthenticated && numbers !== null && (hidden?.length ?? 0) > 0 && (
+        <section className="mt-5">
+          <h2 className="font-medium">Numbers</h2>
+          <p className="text-xs text-muted-foreground">
+            Everything hidden so far, by reason and by day. Refresh below to update.
+          </p>
+          <ItemGroup className="mt-2">
+            {numbers.byReason
+              .filter(({ count }) => count > 0)
+              .sort((a, b) => b.count - a.count)
+              .map(({ reason, count }) => (
+                <Item key={reason} size="xs">
+                  <ItemContent>
+                    <ItemTitle>{REASONS[reason]}</ItemTitle>
+                  </ItemContent>
+                  <ItemActions>{count}</ItemActions>
+                </Item>
+              ))}
+          </ItemGroup>
+          <h3 className="mt-3 text-xs text-muted-foreground">Last 7 days</h3>
+          <ItemGroup className="mt-1">
+            {numbers.byDay
+              .map((count, i) => (
+                <Item key={days.labels[i]} size="xs">
+                  <ItemContent>
+                    <ItemTitle>{days.labels[i]}</ItemTitle>
+                  </ItemContent>
+                  <ItemActions>{count}</ItemActions>
+                </Item>
+              ))
+              .reverse()}
+          </ItemGroup>
+        </section>
+      )}
+
       {isAuthenticated && hidden !== null && (
         <section className="mt-5">
           <div className="flex items-center justify-between">
@@ -210,7 +250,7 @@ export default function Settings() {
                     <ItemTitle>{REASONS[post.reason]}</ItemTitle>
                     <ItemDescription>
                       <a href={post.url} target="_blank" rel="noreferrer">
-                        Open post
+                        Open
                       </a>
                     </ItemDescription>
                   </ItemContent>

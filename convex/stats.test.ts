@@ -2,6 +2,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { expect, test } from "vite-plus/test";
+import aggregate from "@convex-dev/aggregate/test";
 import shardedCounter from "@convex-dev/sharded-counter/test";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -11,6 +12,7 @@ const modules = import.meta.glob("./**/*.ts");
 async function setup() {
   const t = convexTest(schema, modules);
   shardedCounter.register(t, "shardedCounter");
+  aggregate.register(t, "aggregate");
   const userId = await t.run((ctx) => ctx.db.insert("users", {}));
   return { t, asUser: t.withIdentity({ subject: userId }) };
 }
@@ -53,6 +55,38 @@ test("a post id that is not all digits is rejected", async () => {
   await expect(
     asUser.mutation(api.stats.recordHidden, { posts: [{ id: "12a", reason: "ad" }] }),
   ).rejects.toThrow("Bad post id");
+});
+
+test("an ad on another site is recorded by its link, once", async () => {
+  const { asUser } = await setup();
+  const posts = [
+    { url: "https://www.reddit.com/user/acme/comments/1", reason: "promoted" as const },
+  ];
+  await asUser.mutation(api.stats.recordHidden, { posts });
+  await asUser.mutation(api.stats.recordHidden, { posts });
+  expect(await asUser.query(api.stats.myDodged)).toBe(1);
+  await expect(
+    asUser.mutation(api.stats.recordHidden, { posts: [{ url: "javascript:1", reason: "ad" }] }),
+  ).rejects.toThrow("Bad post id");
+});
+
+test("myBreakdown counts by reason and between the given days", async () => {
+  const { t, asUser } = await setup();
+  expect(await t.query(api.stats.myBreakdown, { days: [0, 1] })).toBeNull();
+  await asUser.mutation(api.stats.recordHidden, {
+    posts: [
+      { id: "1", reason: "ad" },
+      { id: "2", reason: "ad" },
+      { id: "3", reason: "slop" },
+    ],
+  });
+  const now = Date.now();
+  const got = await asUser.query(api.stats.myBreakdown, { days: [0, now - 60_000, now + 60_000] });
+  expect(got?.byReason.filter(({ count }) => count > 0)).toEqual([
+    { reason: "ad", count: 2 },
+    { reason: "slop", count: 1 },
+  ]);
+  expect(got?.byDay).toEqual([0, 3]);
 });
 
 test("more than 200 posts is rejected", async () => {
