@@ -39,6 +39,11 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-focus: var(--focus);
+  --color-control-off: var(--control-off);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -81,6 +86,12 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Added on top of shadcn: the one accent, a solid focus ring, and an off-switch track that holds 3:1. */
+  --brand: oklch(0.5 0.095 200);
+  --brand-foreground: oklch(0.985 0 0);
+  --brand-soft: oklch(0.965 0.025 200);
+  --focus: var(--brand);
+  --control-off: oklch(0.65 0 0);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -116,6 +127,10 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    --brand: oklch(0.82 0.11 195);
+    --brand-foreground: oklch(0.205 0 0);
+    --brand-soft: oklch(0.29 0.05 200);
+    --control-off: oklch(0.52 0 0);
   }
 }
 
