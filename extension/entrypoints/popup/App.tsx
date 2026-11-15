@@ -50,21 +50,27 @@ export default function App() {
         <h1 className="font-heading text-base font-semibold">No More Ads</h1>
         {dodged !== null && (
           <p className="text-xs text-muted-foreground">
-            <span className="font-medium text-brand tabular-nums">{dodged}</span> hidden, about{" "}
-            {timeSaved(dodged)} saved
+            {dodged === 0 ? (
+              "Nothing hidden yet"
+            ) : (
+              <>
+                <span className="font-medium text-brand tabular-nums">{dodged}</span> hidden, about{" "}
+                {timeSaved(dodged)} saved
+              </>
+            )}
           </p>
         )}
       </header>
 
       {failing && (
         <p role="alert" className="mt-2 text-xs text-destructive">
-          The extension couldn't reach its backend, so posts aren't being judged or counted. Press
-          Reload.
+          Can't connect right now. Unlabeled ads and AI slop on X aren't being caught, and nothing
+          is counted. Reload the tab to try again.
         </p>
       )}
       {!isLoading && !isAuthenticated && (
         <p className="mt-2 text-xs text-muted-foreground">
-          Sign in from Settings to judge and count posts on X.
+          Sign in from Settings to count what's hidden and catch unlabeled ads and AI slop on X.
         </p>
       )}
 
@@ -85,7 +91,7 @@ export default function App() {
           Settings
         </Button>
         <Button variant="outline" size="sm" onClick={() => void reload()}>
-          Reload
+          Reload tab
         </Button>
       </footer>
     </main>

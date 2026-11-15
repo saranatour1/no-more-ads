@@ -25,8 +25,8 @@ import Account from "./Account.tsx";
 const DEFAULT_HOSTS = DEFAULT_SITES.flatMap((site) => site.hosts);
 
 const REASONS = {
-  promoted: "Ad, marked by the site",
-  ad: "Advert",
+  promoted: "Labeled ad",
+  ad: "Unlabeled ad",
   slop: "AI slop",
   blocked: "Blocked word or site",
 };
@@ -59,18 +59,10 @@ export default function Settings() {
     // oxlint-disable-next-line react/exhaustive-deps -- loadHidden only uses stable values
   }, [convex, isAuthenticated]);
 
-  async function reload() {
-    // Re-register scripts first so the reloaded page gets the current ones.
-    await syncSites();
-    // Restarts the whole extension: the browser keeps running the old
-    // background script until this happens, whatever is on disk. The
-    // restarted background then reloads the tab (see background.ts).
-    browser.runtime.reload();
-  }
-
   // Null while loading or signed out: the list is kept per account.
   const blocked = useQuery(api.blocked.list) ?? null;
   const [blockDraft, setBlockDraft] = useState("");
+  const [blockInvalid, setBlockInvalid] = useState(false);
   // The page scripts can't query the backend, so they read this copy.
   // shortcut: other devices get the list only once this page is opened there, sync from the background if that matters.
   useEffect(() => {
@@ -79,7 +71,9 @@ export default function Settings() {
 
   async function block(event: FormEvent) {
     event.preventDefault();
-    if (blockDraft.trim().length < 2) return;
+    const tooShort = blockDraft.trim().length < 2;
+    setBlockInvalid(tooShort);
+    if (tooShort) return;
     await convex.mutation(api.blocked.add, { term: blockDraft });
     setBlockDraft("");
   }
@@ -108,6 +102,9 @@ export default function Settings() {
       </header>
 
       <h2 className="mt-5 font-medium">Sites</h2>
+      <p className="text-xs text-muted-foreground">
+        Your browser asks for access when you turn a site on. Nothing runs on sites that are off.
+      </p>
 
       <ItemGroup className="mt-2 gap-2">
         {DEFAULT_SITES.map((site) => (
@@ -144,16 +141,11 @@ export default function Settings() {
           Add
         </Button>
       </form>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <p role="status" className="min-h-4 text-xs text-muted-foreground">
-          {invalid
-            ? "That doesn't look like a website address."
-            : changed && "Reload open tabs to apply the change."}
-        </p>
-        <Button variant="outline" size="sm" onClick={() => void reload()}>
-          Reload
-        </Button>
-      </div>
+      <p role="status" className="mt-2 min-h-4 text-xs text-muted-foreground">
+        {invalid
+          ? "That doesn't look like a website address. Try something like example.com."
+          : changed && "Changes apply after you reload the site's tab."}
+      </p>
 
       {blocked !== null && (
         <section className="mt-5">
@@ -167,12 +159,18 @@ export default function Settings() {
               onChange={(event) => setBlockDraft(event.target.value)}
               placeholder="A word or site, e.g. crypto"
               aria-label="Word or site to block"
+              aria-invalid={blockInvalid}
               maxLength={100}
             />
             <Button type="submit" variant="outline">
               Block
             </Button>
           </form>
+          {blockInvalid && (
+            <p role="status" className="mt-2 text-xs text-muted-foreground">
+              Use at least 2 characters.
+            </p>
+          )}
           {blocked.length > 0 && (
             <ItemGroup className="mt-2">
               {blocked.map((term) => (
@@ -198,9 +196,9 @@ export default function Settings() {
 
       {isAuthenticated && numbers !== null && (hidden?.length ?? 0) > 0 && (
         <section className="mt-5">
-          <h2 className="font-medium">Numbers</h2>
+          <h2 className="font-medium">Totals</h2>
           <p className="text-xs text-muted-foreground">
-            Everything hidden so far, by reason and by day. Refresh below to update.
+            Everything hidden so far, by reason and by day. Press Refresh to update.
           </p>
           <ItemGroup className="mt-2">
             {numbers.byReason
@@ -241,7 +239,9 @@ export default function Settings() {
             </Button>
           </div>
           {hidden.length === 0 ? (
-            <p className="mt-2 text-muted-foreground">Nothing hidden yet.</p>
+            <p className="mt-2 text-muted-foreground">
+              Nothing hidden yet. Turn on a site above and browse as usual.
+            </p>
           ) : (
             <ItemGroup className="mt-2">
               {hidden.map((post) => (
@@ -250,7 +250,7 @@ export default function Settings() {
                     <ItemTitle>{REASONS[post.reason]}</ItemTitle>
                     <ItemDescription>
                       <a href={post.url} target="_blank" rel="noreferrer">
-                        Open
+                        Open post
                       </a>
                     </ItemDescription>
                   </ItemContent>

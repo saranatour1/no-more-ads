@@ -10,6 +10,9 @@ export default defineConfig({
   webExt: { disabled: true },
   manifest: ({ browser }) => ({
     name: "No More Ads",
+    // Chrome allows 132 characters.
+    description:
+      "Hides ads and promoted posts on the sites you turn on. Nothing runs on the sites you leave off.",
     permissions: ["identity", "scripting", "storage"],
     // Nothing is granted at install: the user turns sites on one by one.
     optional_host_permissions: ["*://*/*"],

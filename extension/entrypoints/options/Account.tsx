@@ -31,21 +31,22 @@ function SignedOut() {
       if (result.status === "error") throw new Error(result.userError.error);
       await setSession(result.tokens);
     } catch (cause) {
-      console.error(cause);
-      setError(`Sign-in failed. Is ${new URL(redirectTo).origin} an allowed redirect origin?`);
+      // The usual cause while developing; kept out of the UI.
+      console.error(`Is ${new URL(redirectTo).origin} an allowed redirect origin?`, cause);
+      setError("Couldn't sign in with GitHub. Try again, or continue as a guest.");
     }
   }
 
   return (
     <>
-      <span>
+      <p>Sign in to count what's hidden and block words.</p>
+      <span className="flex gap-3">
         <Button variant="link" size="xs" className="px-0" onClick={() => void signIn()}>
           Sign in with GitHub
         </Button>
         {/* Always offered: the backend refuses guests unless AUTH_ALLOW_GUEST is on. */}
-        {" or "}
         <Button variant="link" size="xs" className="px-0" onClick={() => void guest.signIn()}>
-          as guest
+          Continue as guest
         </Button>
       </span>
       {error !== null && (
@@ -60,9 +61,12 @@ function SignedOut() {
 function SignedIn() {
   const { signOut } = useAuthActions();
   const user = useQuery(api.users.getCurrentUser);
+  const name = user?.name ?? user?.login ?? null;
   return (
     <span className="flex items-center justify-between">
-      <span>{user === undefined ? "…" : (user?.name ?? user?.login ?? "Guest")}</span>
+      <span>
+        {user === undefined ? "…" : name === null ? "Signed in as a guest" : `Signed in as ${name}`}
+      </span>
       <Button variant="link" size="xs" className="px-0" onClick={() => void signOut()}>
         Sign out
       </Button>
