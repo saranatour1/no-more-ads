@@ -50,7 +50,7 @@ export default function App() {
         <h1 className="font-heading text-base font-semibold">No More Ads</h1>
         {dodged !== null && (
           <p className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground tabular-nums">{dodged}</span> hidden, about{" "}
+            <span className="font-medium text-brand tabular-nums">{dodged}</span> hidden, about{" "}
             {timeSaved(dodged)} saved
           </p>
         )}
