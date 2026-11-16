@@ -190,6 +190,9 @@ importers:
       '@convex-dev/sharded-counter':
         specifier: ^0.2.3
         version: 0.2.3(convex@1.50.0(react@19.3.1))
+      '@convex-dev/static-hosting':
+        specifier: 0.2.2
+        version: 0.2.2(convex@1.50.0(react@19.3.1))(react@19.3.1)
       '@fontsource-variable/figtree':
         specifier: ^5.3.0
         version: 5.3.0
@@ -474,6 +477,13 @@ packages:
     resolution: {integrity: sha512-rKiUHt/cThlj9qiLUe8nGXWQOvotqynyv4WcH5chwfQmXn2SJvt9yMFkVudXRuJl+NIAxSwY9JY0POfB2YZDEg==}
     peerDependencies:
       convex: ^1.25.4
+
+  '@convex-dev/static-hosting@0.2.2':
+    resolution: {integrity: sha512-lLg3RIlRN3JazGrQPhGUJZm1zD986JKunnM7XFZsGcZfULN8CFByXaHzphPq7WRq3BBo8IbOxum9RhrsVrwpAA==}
+    hasBin: true
+    peerDependencies:
+      convex: ^1.37.0
+      react: ^18.3.1 || ^19.0.0
 
   '@dotenvx/dotenvx@1.75.1':
     resolution: {integrity: sha512-/BITOC9dmS/edY2zQwZNicQ059O6RKabtQfyEafV0nGtfYRNHYy1DIPiYVcov40+tob9hfmBnbR963dS+EQ1DQ==}
@@ -4211,6 +4221,11 @@ snapshots:
   '@convex-dev/sharded-counter@0.2.3(convex@1.50.0(react@19.3.1))':
     dependencies:
       convex: 1.50.0(react@19.3.1)
+
+  '@convex-dev/static-hosting@0.2.2(convex@1.50.0(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      convex: 1.50.0(react@19.3.1)
+      react: 19.3.1
 
   '@dotenvx/dotenvx@1.75.1':
     dependencies:
