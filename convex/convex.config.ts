@@ -6,6 +6,7 @@ import aggregate from "@convex-dev/aggregate/convex.config.js";
 import shardedCounter from "@convex-dev/sharded-counter/convex.config.js";
 import rateLimiter from "@convex-dev/rate-limiter/convex.config.js";
 import authGithub from "@convex-dev/auth/components/github/convex.config.js";
+import staticHosting from "@convex-dev/static-hosting/convex.config";
 
 const app = defineApp({
   env: {
@@ -37,5 +38,7 @@ app.use(authAnonymous);
 app.use(shardedCounter);
 app.use(rateLimiter);
 app.use(aggregate);
+// The website is served at the root; the auth components keep their own prefixes.
+app.use(staticHosting, { httpPrefix: "/" });
 
 export default app;
