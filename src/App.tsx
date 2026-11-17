@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { track } from "@databuddy/sdk";
 import {
   Facebook01Icon,
   GoogleIcon,
@@ -73,7 +74,12 @@ export default function App() {
       <header className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-8">
         <span className="text-lg font-semibold">No More Ads</span>
         <Button variant="outline" size="sm" asChild>
-          <a href={STORES[browserName]}>Add to {browserName}</a>
+          <a
+            href={STORES[browserName]}
+            onClick={() => track("install_clicked", { browser: browserName, placement: "header" })}
+          >
+            Add to {browserName}
+          </a>
         </Button>
       </header>
 
@@ -96,14 +102,27 @@ export default function App() {
             </p>
             <div className="flex flex-col items-start gap-3 pt-4">
               <Button variant="brand" size="lg" asChild>
-                <a href={STORES[browserName]}>Add to {browserName}</a>
+                <a
+                  href={STORES[browserName]}
+                  onClick={() =>
+                    track("install_clicked", { browser: browserName, placement: "hero" })
+                  }
+                >
+                  Add to {browserName}
+                </a>
               </Button>
               {isSafari && (
                 <p className="text-xs text-muted-foreground">Not available for Safari yet.</p>
               )}
               <p className="text-xs text-muted-foreground">
                 Using {otherName}?{" "}
-                <a href={STORES[otherName]} className="underline underline-offset-4">
+                <a
+                  href={STORES[otherName]}
+                  onClick={() =>
+                    track("install_clicked", { browser: otherName, placement: "other_browser" })
+                  }
+                  className="underline underline-offset-4"
+                >
                   Get it here
                 </a>
               </p>

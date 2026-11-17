@@ -193,6 +193,9 @@ importers:
       '@convex-dev/static-hosting':
         specifier: 0.2.2
         version: 0.2.2(convex@1.50.0(react@19.3.1))(react@19.3.1)
+      '@databuddy/sdk':
+        specifier: ^3.5.3
+        version: 3.5.3(react@19.3.1)
       '@fontsource-variable/figtree':
         specifier: ^5.3.0
         version: 5.3.0
@@ -484,6 +487,17 @@ packages:
     peerDependencies:
       convex: ^1.37.0
       react: ^18.3.1 || ^19.0.0
+
+  '@databuddy/sdk@3.5.3':
+    resolution: {integrity: sha512-pAro3lR74ltGQL9mMF4Hi1jtxAdzGSAZQhQx0F3c0UaFvnKcJ3uVBoIIH5Zz5vY9I2IrvFHeJ/WspcJ+KTh5zw==}
+    peerDependencies:
+      react: '>=18'
+      vue: '>=3.5'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      vue:
+        optional: true
 
   '@dotenvx/dotenvx@1.75.1':
     resolution: {integrity: sha512-/BITOC9dmS/edY2zQwZNicQ059O6RKabtQfyEafV0nGtfYRNHYy1DIPiYVcov40+tob9hfmBnbR963dS+EQ1DQ==}
@@ -4225,6 +4239,10 @@ snapshots:
   '@convex-dev/static-hosting@0.2.2(convex@1.50.0(react@19.3.1))(react@19.3.1)':
     dependencies:
       convex: 1.50.0(react@19.3.1)
+      react: 19.3.1
+
+  '@databuddy/sdk@3.5.3(react@19.3.1)':
+    optionalDependencies:
       react: 19.3.1
 
   '@dotenvx/dotenvx@1.75.1':
