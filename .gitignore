@@ -35,3 +35,4 @@ dist-ssr
 
 # Isolated worktrees used by coding agents
 .claude/worktrees
+.env
